@@ -180,8 +180,6 @@ class QueryBuilder
 
         $sql = sprintf("UPDATE %s SET %s WHERE %s", $this->table, $setClause, $whereClause);
 
-        var_dump($sql);
-
         $stmt = self::$db->prepare($sql);
         return $stmt->execute($bindings);
     }
