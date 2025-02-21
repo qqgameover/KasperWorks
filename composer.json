@@ -1,0 +1,20 @@
+{
+    "name": "kasper/kasperworks",
+    "description": "A simple to use ORM",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Kasperworks\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "qqgameover",
+            "email": "kasper35@live.no"
+        }
+    ],
+    "require": {
+        "vlucas/phpdotenv": "^5.6"
+    }
+}
