@@ -137,7 +137,7 @@ abstract class Model
             throw new \Exception("Cannot update protected fields");
         }
 
-        static::query()->update($data, [$primaryKey => $this->$primaryKey]);
+        static::query()->update($data, [$primaryKey, "=", $this->$primaryKey]);
 
         // Refresh the object’s data
         $updated = static::find($this->$primaryKey);
@@ -147,6 +147,23 @@ abstract class Model
 
         return $updated;
     }
+
+    /**
+    * Static version: Update records in the database without needing an instance.
+    * @param array<string, mixed> $data  The data to update.
+    * @param array<string, mixed> $where Conditions for updating records.
+    * @return bool Returns true if at least one record was updated.
+    * @throws \Exception
+    */
+    public static function updateBy(array $data, array $where): bool
+    {
+        if (empty($where)) {
+            throw new \Exception("Cannot update without a where condition.");
+        }
+
+        return static::query()->update($data, $where);
+    }
+
 
     /**
      * Delete the model instance from the database
@@ -215,8 +232,11 @@ abstract class Model
         }
 
         if (!empty($errors)) {
-            var_dump($errors);
-            throw new ValidationException("Validation failed with:", $errors);
+            $error_str = "";
+            array_walk($errors, function ($value, $key) use (&$error_str) {
+                $error_str .= "$key: " . implode(", ", $value) . "\n";
+            });
+            throw new ValidationException("Validation failed with: $error_str", $errors);
         }
     }
 

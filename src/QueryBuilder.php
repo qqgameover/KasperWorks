@@ -32,6 +32,12 @@ class QueryBuilder
 
     public function where(string $column, string $operator, mixed $value): self
     {
+
+        $allowedOperators = ["=", "!=", ">", "<", ">=", "<=", "LIKE", "IN", "NOT IN"];
+        if(!in_array($operator, $allowedOperators, true)){
+            throw new \Exception("Invalid operator in WHERE clause: $operator");
+        }
+
         $this->whereClauses[] = sprintf("%s %s ?", $column, $operator);
         $this->bindings[] = $value;
         return $this;
@@ -153,12 +159,31 @@ class QueryBuilder
         }
 
         $setClause = implode(", ", array_map(fn($col) => "$col = ?", array_keys($data)));
-        $whereClauses = implode(" AND ", array_map(fn($col) => "$col = ?", array_keys($where)));
 
-        $sql = sprintf("UPDATE %s SET %s WHERE %s", $this->table, $setClause, $whereClauses);
+        $whereClauses = [];
+        $bindings = array_values($data);
+
+        if (count($where) !== 3) {
+            throw new \Exception("Invalid WHERE condition format. Expected: ['column', 'operator', 'value']");
+        }
+
+        [$column, $operator, $value] = $where;
+        $allowedOperators = ["=", "!=", ">", "<", ">=", "<=", "LIKE", "IN", "NOT IN"];
+        if (!in_array($operator, $allowedOperators, true)) {
+            throw new \Exception("Invalid operator in WHERE clause: $operator");
+        }
+
+        $whereClauses[] = "$column $operator ?";
+        $bindings[] = $value;
+
+        $whereClause = implode(" AND ", $whereClauses);
+
+        $sql = sprintf("UPDATE %s SET %s WHERE %s", $this->table, $setClause, $whereClause);
+
+        var_dump($sql);
 
         $stmt = self::$db->prepare($sql);
-        return $stmt->execute([...array_values($data), ...array_values($where)]);
+        return $stmt->execute($bindings);
     }
 
     public function pluck(string $column, ?string $key = null): array
@@ -169,7 +194,7 @@ class QueryBuilder
             $this->selectColumns[] = $key;
         }
 
-        $results = $this->get(); // Execute the query
+        $results = $this->get();
 
         if ($key) {
             return array_column($results, $column, $key);
